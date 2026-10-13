@@ -1,0 +1,33 @@
+{
+  "name": "bla",
+  "version": "1.0.0",
+  "description": "Bla \u2014 a self-hosted, Discord-style chat platform. Free accounts with no email, unlimited free servers, and every server boost perk unlocked for everybody.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node --no-warnings server/index.js",
+    "dev": "node --no-warnings --watch server/index.js",
+    "test": "node --no-warnings test/smoke.js",
+    "reset-db": "node --no-warnings scripts/reset-db.js",
+    "test:ui": "node --no-warnings test/ui.js"
+  },
+  "dependencies": {
+    "express": "^4.22.3",
+    "ws": "^8.22.0"
+  },
+  "keywords": [
+    "chat",
+    "self-hosted",
+    "discord-alternative",
+    "voice",
+    "webrtc",
+    "realtime"
+  ],
+  "devDependencies": {
+    "jsdom": "^30.1.2"
+  }
+}

@@ -3,7 +3,18 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-const ROOT = path.resolve(__dirname, '..');
+// Packaged binaries (npm run build): data lives next to the executable, since
+// that is the "installation folder" the user chose. A source checkout uses the
+// repository root. BLA_ROOT overrides both.
+function baseRoot() {
+  try {
+    // node:sea exists in every Node 20+ runtime; isSea() is only true when
+    // this code was launched from a single-executable binary.
+    if (require('node:sea').isSea()) return path.dirname(process.execPath);
+  } catch { /* source checkout */ }
+  return path.resolve(__dirname, '..');
+}
+const ROOT = path.resolve(env('BLA_ROOT', baseRoot()));
 
 function env(name, fallback) {
   const v = process.env[name];
@@ -23,8 +34,19 @@ function num(name, fallback) {
 
 const dataDir = path.resolve(env('BLA_DATA_DIR', path.join(ROOT, 'data')));
 
+/** Version string: env override, the packaged value, or package.json. */
+function readVersion() {
+  if (process.env.BLA_VERSION) return String(process.env.BLA_VERSION);
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+    if (pkg.version) return String(pkg.version);
+  } catch { /* thrown away builds have no package.json */ }
+  return '1.0.0';
+}
+
 const config = {
   root: ROOT,
+  version: readVersion(),
   dataDir,
   mediaDir: path.join(dataDir, 'media'),
   uploadDir: path.join(dataDir, 'uploads'),

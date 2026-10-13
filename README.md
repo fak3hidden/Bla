@@ -42,7 +42,58 @@ npm run dev        # same thing, restarts on file changes
 npm test           # boots a throwaway instance and runs ~80 end-to-end checks
 npm run test:ui    # same idea, but renders the real client in jsdom (needs dev deps)
 npm run reset-db   # wipe accounts/servers/messages and start over
+npm run build      # pack everything into one standalone executable (see below)
 ```
+
+## Building a standalone executable
+
+`npm run build` packages Bla itself — server, dependencies and the whole web client —
+into **one self-contained binary**. Someone on the receiving end needs no Node.js, no
+npm and no `git clone`: they download a file, run it, and open their browser.
+
+```bash
+npm install          # once, for the build tools (esbuild + postject)
+npm run build        # -> dist/bla   (dist\bla.exe on Windows)
+```
+
+```bash
+./dist/bla                     # starts the server; data/ is created next to it
+BLA_PORT=8080 ./dist/bla       # everything npm start understands works here too
+```
+
+On first run the executable prints its URL, creates `data/` beside itself and asks you
+to claim the admin account — exactly like `npm start`. Copy that one file to any other
+machine with the same OS/CPU and it runs there too: no `node_modules`, no source tree.
+
+Useful flags:
+
+```bash
+npm run build -- --outfile /usr/local/bin/bla   # install it somewhere on PATH
+npm run build -- --target win-x64               # dist/bla.exe for Windows x64
+npm run build -- --no-assets                    # don't embed the web client
+npm run build -- --keep                         # keep intermediate build files
+npm run build -- --help                         # all options
+```
+
+How it works, in case you want to hack on it (`scripts/build.js`):
+
+1. **esbuild** bundles `server/` + `src/` + the dependencies into a single CommonJS file.
+2. `node --experimental-sea-config` packs that bundle and every file under `public/`
+   into one blob (Node's official *single executable application* format).
+3. **postject** copies the Node runtime you already have and injects the blob into it,
+   producing `dist/bla`.
+
+The resulting binary embeds the web client as read-only assets and unpacks them to a
+cache directory on first boot, so the app still serves `index.html`, the CSS, the JS and
+the logo with no files next to it. `BLA_DATA_DIR`, `BLA_PORT` and the rest of the
+environment variables work identically.
+
+> **Cross-compiling:** the JS is portable, but the executable is a copy of the *host*
+> runtime, so a Linux build produces a Linux binary. Building on Windows gives you
+> `bla.exe`, building in a Linux container gives you a Linux binary. `--target` tells the
+> builder which suffix to use; build on the platform you are targeting for the real thing.
+
+---
 
 ### Docker
 
@@ -188,6 +239,8 @@ public/
 test/smoke.js          end-to-end test: boots a throwaway server, then hits it
 test/ui.js             renders the client against a throwaway server (jsdom)
 scripts/reset-db.js    wipe the instance
+scripts/build.js       builder: bundles the app into one standalone executable
+src/sea.js             single-executable helpers (embedded web assets)
 ```
 
 The frontend intentionally has **no build step**: reload the page and you are running
@@ -197,6 +250,11 @@ on an air-gapped LAN.
 ---
 
 ## FAQ
+
+**Can I hand someone a single file instead of a repo?**
+Yes — `npm run build` produces `dist/bla` (`bla.exe` on Windows), a standalone binary
+with the server, the dependencies and the web UI inside. See
+[Building a standalone executable](#building-a-standalone-executable).
 
 **Do I need an email server, SMTP, or any third-party service?** No. Accounts are
 username + password only; password resets are an admin action, not an email flow.

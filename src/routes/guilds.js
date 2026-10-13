@@ -70,7 +70,7 @@ router.get('/:guildId', guildContext(), (req, res) => {
 router.get('/:guildId/sync', guildContext(), (req, res) => {
   res.json({
     guild: state.guildPayload(req.guild, req.user.id, { isAdmin: req.user.is_admin }),
-    read_states: require('./syncHelpers').guildReadStates(req.user.id, req.guild.id),
+    read_states: require('../syncHelpers').guildReadStates(req.user.id, req.guild.id),
   });
 });
 

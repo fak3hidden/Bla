@@ -100,7 +100,9 @@ function createMessage({
   }
   if (attachments.length && !attachmentIds.length) attachments.length = 0;
 
-  const { mentions, roles, mentionEveryone } = parseMentions(text, channel.guild_id);
+  const parsedMentions = parseMentions(text, channel.guild_id);
+  const { mentions, roles } = parsedMentions;
+  let { mentionEveryone } = parsedMentions;
 
   // Slowmode applies to humans, not webhooks or moderators.
   if (channel.slowmode > 0 && !system && !webhookId && authorId) {

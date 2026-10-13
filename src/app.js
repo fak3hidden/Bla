@@ -4,6 +4,7 @@ const express = require('express');
 const config = require('./config');
 const auth = require('./auth');
 const gate = require('./gate');
+const sea = require('./sea');
 
 const { flag } = gate;
 
@@ -72,7 +73,9 @@ function createApp() {
     res.redirect(`/#/invite/${encodeURIComponent(req.params.code)}`);
   });
 
-  const webRoot = path.join(config.root, 'public');
+  // In a packaged binary the front-end ships as embedded SEA assets that get
+  // unpacked next to the binary; in a source checkout this is just ./public.
+  const webRoot = sea.assetRoot();
   app.use(express.static(webRoot, {
     index: 'index.html',
     maxAge: '1h',
@@ -81,9 +84,12 @@ function createApp() {
     },
   }));
 
-  // Client-side routing: everything that isn't API/static falls back to the app.
+  // Client-side routing: anything that isn't an API call or a static file falls
+  // back to the app shell — but a request that clearly expects a file (it has an
+  // extension) gets an honest 404 instead of HTML pretending to be that file.
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api/')) return next();
+    if (path.extname(req.path)) return next();
     return res.sendFile(path.join(webRoot, 'index.html'));
   });
 

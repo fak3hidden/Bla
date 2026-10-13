@@ -260,6 +260,14 @@ async function main() {
     const mention = await alice.post(`/api/channels/${channel.id}/messages`, { content: `hi <@${bobReg.data.user.id}>` });
     ok('mentions are parsed', (mention.data.message.mentions || []).length === 1);
 
+    // Regression: @everyone from someone without MENTION_EVERYONE used to throw
+    // (assignment to a const), and the wrapper used to swallow the flag entirely.
+    const ping = await bob.post(`/api/channels/${channel.id}/messages`, { content: 'hey @everyone' });
+    ok('a member without MENTION_EVERYONE can still post @everyone', ping.status === 201 || ping.status === 200);
+    ok('...but the ping is silently downgraded', ping.data.message?.mention_everyone === false);
+    const adminPing = await alice.post(`/api/channels/${channel.id}/messages`, { content: 'ok @everyone' });
+    ok('the owner can actually ping everyone', adminPing.data.message?.mention_everyone === true);
+
     const edited = await alice.patch(`/api/messages/${messageId}`, { content: 'hello edited world' });
     ok('edit a message', edited.data.message?.content === 'hello edited world' || edited.status === 200);
 
@@ -401,6 +409,9 @@ async function main() {
     ok('ban a member', banRes.status === 200 || banRes.status === 204, `status=${banRes.status}`);
     const bans = await alice.get(`/api/guilds/${guild.id}/bans`);
     ok('bans are recorded', (bans.data.bans || []).length === 1);
+    const resync = await alice.get(`/api/guilds/${guild.id}/sync`);
+    ok('guild resync returns read states', resync.status === 200 && Array.isArray(resync.data.read_states?.channels));
+
     const audit = await alice.get(`/api/guilds/${guild.id}/audit-logs`);
     ok('audit log is written', (audit.data.audit_log_entries || []).length >= 1, JSON.stringify(audit.data).slice(0, 120));
     const auditDenied = await bob.get(`/api/guilds/${guild.id}/audit-logs`);

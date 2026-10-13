@@ -18,7 +18,6 @@ COPY server ./server
 COPY src ./src
 COPY public ./public
 COPY scripts ./scripts
-COPY test ./test
 COPY README.md LICENSE ./
 
 # Writable data volume (database + uploads + media).

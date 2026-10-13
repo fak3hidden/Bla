@@ -1,0 +1,28 @@
+services:
+  bla:
+    build: .
+    image: bla:latest
+    container_name: bla
+    restart: unless-stopped
+    ports:
+      - "${BLA_PORT:-3000}:3000"
+    environment:
+      BLA_HOST: 0.0.0.0
+      BLA_PORT: 3000
+      BLA_DATA_DIR: /data
+      BLA_DB: /data/bla.db
+      BLA_SERVER_NAME: "${BLA_SERVER_NAME:-Bla}"
+      BLA_REGISTRATION_OPEN: "${BLA_REGISTRATION_OPEN:-true}"
+      BLA_INVITE_ONLY: "${BLA_INVITE_ONLY:-false}"
+      BLA_MAX_UPLOAD_MB: "${BLA_MAX_UPLOAD_MB:-100}"
+      BLA_VOICE_BITRATE: "${BLA_VOICE_BITRATE:-384000}"
+      # Set both of these when running behind a reverse proxy:
+      # BLA_PUBLIC_URL: "https://chat.example.com"
+      # BLA_TRUST_PROXY: "true"
+      # Point voice at your own TURN server for friends behind strict NATs:
+      # BLA_STUN_URLS: "stun:stun.example.com:3478,turn:turn.example.com:3478?transport=udp"
+    volumes:
+      - bla-data:/data
+
+volumes:
+  bla-data:
